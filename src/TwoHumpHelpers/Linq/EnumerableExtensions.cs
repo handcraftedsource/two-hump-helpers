@@ -1,5 +1,6 @@
 ﻿using Microsoft.SemanticKernel.Connectors.AI.OpenAI.Tokenizers;
 using Microsoft.SemanticKernel.Memory;
+using Microsoft.SemanticKernel.Text;
 
 namespace TwoHumpHelpers.Linq;
 
@@ -29,5 +30,28 @@ public static class EnumerableExtensions
             .TakeWhileAggregate(0, (total, current) => total + GPT3Tokenizer.Encode(current.Metadata.Text).Count, total => total < maxTokens);
 
         return inputMemories;
+    }
+
+    public static IEnumerable<string> TakeMaxTokens(this IEnumerable<string> texts, int maxTokens)
+    {
+        var inputMemories = texts
+            .TakeWhileAggregate(0, (total, current) => total + GPT3Tokenizer.Encode(current).Count, total => total < maxTokens);
+
+        return inputMemories;
+    }
+
+    public static IEnumerable<string> SplitToParagraphs(this List<string> texts)
+    {
+        foreach (var text in texts)
+        {
+            var lines = TextChunker.SplitPlainTextLines(text, 50);
+            var paragraphs = TextChunker.SplitPlainTextParagraphs(lines, 300);
+
+            foreach (var paragraph in paragraphs)
+            {
+                yield return paragraph;
+            }
+        }
+        
     }
 }

@@ -1,7 +1,7 @@
 ﻿using Microsoft.SemanticKernel;
 using Microsoft.SemanticKernel.Orchestration;
-using Microsoft.SemanticKernel.SemanticFunctions.Partitioning;
 using Microsoft.SemanticKernel.SkillDefinition;
+using Microsoft.SemanticKernel.Text;
 
 namespace TwoHumpHelpers.Skills;
 
@@ -23,11 +23,6 @@ namespace TwoHumpHelpers.Skills;
 /// </example>
 public class TextGenerationSkill
 {
-    /// <summary>
-    /// The max tokens to process in a single semantic function call.
-    /// </summary>
-    public const int SimpleTextGenerationTaskMaxContextTokens = 3097;
-
     private readonly ISKFunction _simpleTextGenerationTaskFunction;
 
     /// <summary>
@@ -49,7 +44,7 @@ public class TextGenerationSkill
     /// <summary>
     /// Generates text based on a task and a given context.
     /// </summary>
-    /// <param name="input">A context for the task to perform. Only <see cref="SimpleTextGenerationTaskMaxContextTokens"/> tokens are used.</param>
+    /// <param name="input">A context for the task to perform.</param>
     /// <param name="context">The SKContext for function execution.</param>
     [SKFunction("Generates text based on a task and a given context.")]
     [SKFunctionName("SimpleTextGenerationTask")]
@@ -57,12 +52,7 @@ public class TextGenerationSkill
     [SKFunctionContextParameter(Name = "task", Description = "The task that describes what text should be generated.")]
     public Task<SKContext> SimpleTextGenerationTaskAsync(string input, SKContext context)
     {
-        // TODO - Next NuGet version: renamed to TextChunker
-        var lines = SemanticTextPartitioner.SplitPlainTextLines(input, SimpleTextGenerationTaskMaxContextTokens);
-        var paragraphs = SemanticTextPartitioner.SplitPlainTextParagraphs(lines, SimpleTextGenerationTaskMaxContextTokens);
-
-        return _simpleTextGenerationTaskFunction
-            .AggregatePartitionedResultsAsync(paragraphs, context);
+        return _simpleTextGenerationTaskFunction.InvokeAsync(input, context);
     }
 
     private static class Prompts
